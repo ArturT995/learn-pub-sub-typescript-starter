@@ -1,6 +1,33 @@
+import amqp from "amqplib";
+import { clientWelcome } from "../internal/gamelogic/gamelogic.js"
+import { declareAndBind, SimpleQueueType } from "../internal/pubsub/publish.js"
+
+
+import { ExchangePerilDirect, PauseKey } from "../internal/routing/routing.js"
+import type { PlayingState } from "../internal/gamelogic/gamestate.js"
+
+
 async function main() {
   console.log("Starting Peril client...");
-}
+  let cString = "amqp://guest:guest@localhost:5672/";
+
+
+  const conn = await amqp.connect(cString);
+  const username = await clientWelcome();
+  const queueName = `${PauseKey}.${username}`;
+
+  await declareAndBind(
+    conn,
+    ExchangePerilDirect,
+    queueName,
+    PauseKey,
+    SimpleQueueType.Transient,
+  )
+
+
+};
+
+
 
 main().catch((err) => {
   console.error("Fatal error:", err);
