@@ -1,6 +1,6 @@
 import amqp from "amqplib";
 import { publishJSON } from "../internal/pubsub/publish.js"
-import { ExchangePerilDirect, PauseKey, RoutingKey, ExchangePerilTopic, GameLogSlug } from "../internal/routing/routing.js"
+import { ExchangePerilDirect, PauseKey, ExchangePerilTopic, GameLogSlug } from "../internal/routing/routing.js"
 import type { PlayingState } from "../internal/gamelogic/gamestate.js"
 import { printServerHelp, getInput } from "../internal/gamelogic/gamelogic.js"
 import { declareAndBind, SimpleQueueType } from "../internal/pubsub/publish.js"
@@ -28,7 +28,7 @@ async function main() {
   };
   
 
-  const RouteKey = `${GameLogSlug}.${RoutingKey}`;
+  const RouteKey = `${GameLogSlug}.*`;
   await declareAndBind(
       conn,
       ExchangePerilTopic,

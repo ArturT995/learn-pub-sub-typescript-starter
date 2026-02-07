@@ -2,7 +2,7 @@ import amqp from "amqplib";
 import { clientWelcome, 
   getInput, 
   printClientHelp,
-  getMaliciousLog,
+  getMaliciousLog, //TBA
   printQuit,
   commandStatus,
 } from "../internal/gamelogic/gamelogic.js"
@@ -11,6 +11,8 @@ import { ExchangePerilDirect, PauseKey } from "../internal/routing/routing.js"
 import { GameState } from "../internal/gamelogic/gamestate.js"
 import { commandSpawn } from "../internal/gamelogic/spawn.js"
 import { commandMove } from "../internal/gamelogic/move.js"
+import { handlerPause } from "./handlers.js";
+import { subscribeJSON } from "../internal/pubsub/subscribe.js";
 
 
 
@@ -35,7 +37,16 @@ async function main() {
 
 
   const gs = new GameState(username)
-  
+  await subscribeJSON(
+    conn,
+    ExchangePerilDirect,
+    queueName,
+    PauseKey,
+    SimpleQueueType.Transient,
+    handlerPause(gs),
+  );
+
+
   while (true) {
     const words = await getInput();
     if (words.length === 0) continue;
