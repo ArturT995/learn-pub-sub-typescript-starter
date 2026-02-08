@@ -1,8 +1,5 @@
 import type { ConfirmChannel} from "amqplib";
-import amqp, { type Channel }  from "amqplib";
-
-
-
+import { encode } from "@msgpack/msgpack";
 
 export function publishJSON<T>(
   ch: ConfirmChannel,
@@ -26,31 +23,26 @@ export function publishJSON<T>(
   });
 }
 
-export enum SimpleQueueType {
-  Durable,
-  Transient,
-}
+export function publishMsgPack<T>(
+  ch: ConfirmChannel,
+  exchange: string,
+  routingKey: string,
+  value: T,
+): Promise<void> {
+    
+  const encoded: Uint8Array = encode(value);
+  const content = Buffer.from(encoded)
 
-export async function declareAndBind(
-    conn: amqp.ChannelModel,
-    exchange: string,
-    queueName: string,
-    key: string,
-    queueType: SimpleQueueType,
-): Promise<[Channel, amqp.Replies.AssertQueue]> {
-  
-  const ch = await conn.createChannel()
-  
-  const queue = await ch.assertQueue(queueName, {
-  durable: queueType === SimpleQueueType.Durable,
-  autoDelete: queueType === SimpleQueueType.Transient,
-  exclusive: queueType === SimpleQueueType.Transient,
+  return new Promise((resolve, reject) => {
+    ch.publish(
+      exchange,
+      routingKey,
+      content,
+      { contentType: "application/x-msgpack" },
+      (err) => {
+        if (err) return reject(err);
+        resolve();
+      },
+    );
   });
-
-  
-  ch.bindQueue(queue.queue, exchange, key)
-
-  return [ch, queue]
-
-
-};
+}
